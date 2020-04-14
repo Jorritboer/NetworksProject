@@ -5,6 +5,7 @@ from btcp.client_socket import BTCPClientSocket
 
 
 def main():
+    print("hello")
     parser = argparse.ArgumentParser()
     parser.add_argument("-w", "--window", help="Define bTCP window size", type=int, default=100)
     parser.add_argument("-t", "--timeout", help="Define bTCP timeout in milliseconds", type=int, default=100)
