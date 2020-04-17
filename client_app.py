@@ -19,5 +19,7 @@ def main():
     # Clean up any state
     s.close()
 
-
+def setup():
+    socket = BTCPClientSocket(args.window, args.timeout)
+    socket.connect()
 main()

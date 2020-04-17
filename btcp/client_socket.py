@@ -15,7 +15,7 @@ class BTCPClientSocket(BTCPSocket):
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
-        pass
+        self._lossy_layer.send_segment("testtestsetsetse")
 
     # Send data originating from the application in a reliable way to the server
     def send(self, data):

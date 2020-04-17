@@ -2,6 +2,8 @@ import unittest
 import socket
 import time
 import sys
+import client_app
+import server_app
 
 timeout=100
 winsize=100
@@ -51,7 +53,8 @@ class TestbTCPFramework(unittest.TestCase):
         """Prepare for testing"""
         # default netem rule (does nothing)
         run_command(netem_add)
-        
+        server_app.waiting()
+        client_app.connect()
         # launch localhost server
         
 

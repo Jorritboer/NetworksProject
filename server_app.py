@@ -18,5 +18,8 @@ def main():
     # Clean up any state
     s.close()
 
+def waiting():
+    serversocket = BTCPServerSocket(args.window, args.timeout)
+    
 
 main()
