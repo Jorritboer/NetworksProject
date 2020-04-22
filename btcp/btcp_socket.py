@@ -30,6 +30,30 @@ class BTCPSocket:
     def intToBytes(number, noBytes = 2):
         return (number).to_bytes(noBytes, byteorder = 'big')
 
+    @staticmethod
+    def breakdown_segment(segment):
+        seqnum = int.from_bytes(segment[0:2], byteorder='big')
+        acknum = int.from_bytes(segment[2:4], byteorder='big')
+        flags = segment[4]
+        ACK = bool(flags & 4)
+        SYN = bool(flags & 2)
+        FIN = bool(flags & 1)
+        windowsize = segment[5] # when getting one byte you don't need to convert from bytes
+        datalength = int.from_bytes(segment[6:8], byteorder='big')
+        cksum = int.from_bytes(segment[8:10], byteorder='big')
+        data = segment[10:10+datalength]
 
+        return seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data
 
-    
+    @staticmethod
+    def print_segment(segment):
+        seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = BTCPSocket.breakdown_segment(segment)
+        print('--------------------------------------------')
+        print('Sequence number: ', seqnum)
+        print('Acknowledgement number: ', acknum)
+        print('ACK =', ACK, '    SYN =', SYN, '    FIN =', FIN)
+        print('Window size: ', windowsize)
+        print('Data length: ', datalength)
+        print('Checksum: ', cksum)
+        print('Data: ', data)
+        print('--------------------------------------------')
