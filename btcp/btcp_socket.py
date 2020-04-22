@@ -28,7 +28,7 @@ class BTCPSocket:
     
     @staticmethod
     def intToBytes(number, noBytes = 2):
-        return (number).to_bytes(noBytes, byteorder = 'big')
+        return (number).to_bytes(noBytes, byteorder = 'big', signed = False)
 
     @staticmethod
     def breakdown_segment(segment):

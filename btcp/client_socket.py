@@ -1,3 +1,4 @@
+import random
 from btcp.btcp_socket import BTCPSocket
 from btcp.lossy_layer import LossyLayer
 from btcp.constants import *
@@ -11,11 +12,13 @@ class BTCPClientSocket(BTCPSocket):
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
     def lossy_layer_input(self, segment):
-        pass
+        super().print_segment(segment[0])
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
-        segment = super().buildsegment(14,15,ACK=True, SYN=True, data='hoiasdf'.encode())
+        randomSeqNum = random.randint(0, MAX_16BITS) # Creating a random 16 bit value for the sequence number
+        print(randomSeqNum)
+        segment = super().buildsegment(randomSeqNum,0, SYN=True)
         self._lossy_layer.send_segment(segment)
         #print(super().buildsegment(14,15))
 
