@@ -45,7 +45,6 @@ def run_command(command,cwd=None, shell=True):
         
 
 
-        
 class TestbTCPFramework(unittest.TestCase):
     """Test cases for bTCP"""
     

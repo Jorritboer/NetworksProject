@@ -9,18 +9,29 @@ class BTCPClientSocket(BTCPSocket):
     def __init__(self, window, timeout):
         super().__init__(window, timeout)
         self._lossy_layer = LossyLayer(self, CLIENT_IP, CLIENT_PORT, SERVER_IP, SERVER_PORT)
+        self._currentState = "waiting"
+        
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
     def lossy_layer_input(self, segment):
         super().print_segment(segment[0])
+        seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = super().breakdown_segment(segment[0])
+        if((SYN and (not FIN) and ACK) and self._currentState == "waiting for SYN and ACK"): 
+                randomSeqNum = random.randint(0, MAX_16BITS)
+                self.sendSegment(acknum, seqnum + 1, ACK = True)
+                self._currentState = "connected"
+                print("the client has connected with acknum: ", acknum, "and seqnum: ", seqnum)
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
         randomSeqNum = random.randint(0, MAX_16BITS) # Creating a random 16 bit value for the sequence number
-        print(randomSeqNum)
-        segment = super().buildsegment(randomSeqNum,0, SYN=True)
-        self._lossy_layer.send_segment(segment)
+        self.sendSegment(randomSeqNum,0, SYN=True)
+        self._currentState = "waiting for SYN and ACK"
         #print(super().buildsegment(14,15))
+
+    def sendSegment(self, seqnum, acknum, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
+        newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
+        self._lossy_layer.send_segment(newsegment)
 
     # Send data originating from the application in a reliable way to the server
     def send(self, data):

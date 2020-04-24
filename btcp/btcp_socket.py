@@ -32,15 +32,15 @@ class BTCPSocket:
 
     @staticmethod
     def breakdown_segment(segment):
-        seqnum = int.from_bytes(segment[0:2], byteorder='big')
-        acknum = int.from_bytes(segment[2:4], byteorder='big')
+        seqnum = int.from_bytes(segment[0:2], byteorder='big', signed = False)
+        acknum = int.from_bytes(segment[2:4], byteorder='big', signed = False)
         flags = segment[4]
         ACK = bool(flags & 4)
         SYN = bool(flags & 2)
         FIN = bool(flags & 1)
         windowsize = segment[5] # when getting one byte you don't need to convert from bytes
-        datalength = int.from_bytes(segment[6:8], byteorder='big')
-        cksum = int.from_bytes(segment[8:10], byteorder='big')
+        datalength = int.from_bytes(segment[6:8], byteorder='big', signed = False)
+        cksum = int.from_bytes(segment[8:10], byteorder='big', signed = False)
         data = segment[10:10+datalength]
 
         return seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data
