@@ -47,7 +47,7 @@ def run_command(command,cwd=None, shell=True):
 
 class TestbTCPFramework(unittest.TestCase):
     """Test cases for bTCP"""
-    
+    #hallo
     def setUp(self):
         """Prepare for testing"""
         # default netem rule (does nothing)
