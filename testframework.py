@@ -39,7 +39,7 @@ def run_command(command,cwd=None, shell=True):
         print("1. problem running command : \n   ", str(command), "\n problem : ", str(inst))
 
     process.communicate()  # wait for the process to end
-
+    print("command has been run")
     if process.returncode:
         print("2. problem running command : \n   ", str(command), " ", process.returncode)
         
@@ -47,13 +47,13 @@ def run_command(command,cwd=None, shell=True):
 
 class TestbTCPFramework(unittest.TestCase):
     """Test cases for bTCP"""
-    #hallo
+    
     def setUp(self):
         """Prepare for testing"""
         # default netem rule (does nothing)
-        #run_command(netem_add)
-        server_app.main()
-        client_app.main()
+        run_command(netem_del)
+        run_command(netem_add)
+        
         
         #launch localhost server
         
@@ -61,15 +61,17 @@ class TestbTCPFramework(unittest.TestCase):
     def tearDown(self):
         """Clean up after testing"""
         # clean the environment
-        #run_command(netem_del)
+        
         
         # close server
 
-    def test_ideal_network(self):
-        """reliability over an ideal framework"""
-        self.assertTrue(True)
+    #def test_ideal_network(self):
+     #   """reliability over an ideal framework"""
+        
         # setup environment (nothing to set)
 
+      #  server_app.main()
+       # client_app.main()
         # launch localhost client connecting to server
         
         # client sends content to server
@@ -77,6 +79,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
+        #self.assertTrue(True)
     
     #def test_flipping_network(self):
        # """reliability over network with bit flips 
@@ -97,8 +100,9 @@ class TestbTCPFramework(unittest.TestCase):
       #  """reliability over network with duplicate packets"""
       #  self.assertTrue(True)
         # setup environment
-        #run_command(netem_change.format("duplicate 10%"))
-        
+      #  run_command(netem_change.format("duplicate 50%"))
+      #  server_app.main()
+      #  client_app.main()
         # launch localhost client connecting to server
         
         # client sends content to server
@@ -106,27 +110,16 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
+       # self.assertTrue(True)
 
-   # def test_lossy_network(self):
-      #  """reliability over network with packet loss"""
-    #    self.assertTrue(True)
-        # setup environment
+    #def test_lossy_network(self):
+     #   """reliability over network with packet loss"""
         #run_command(netem_change.format("loss 10% 25%"))
-        
-        # launch localhost client connecting to server
-        
-        # client sends content to server
-        
-        # server receives content from client
-        
-        # content received by server matches the content sent by client
-
-
-  #  def test_reordering_network(self):
-    #    """reliability over network with packet reordering"""
-   #     self.assertTrue(True)
+      #  run_command(netem_change.format("loss 80%"))
+       # server_app.main()
+        #client_app.main()
         # setup environment
-        #run_command(netem_change.format("delay 20ms reorder 25% 50%"))
+        
         
         # launch localhost client connecting to server
         
@@ -135,12 +128,29 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
+        #self.assertTrue(True)
+
+    #def test_reordering_network(self):
+    #    """reliability over network with packet reordering"""    
+        # setup environment
+        #run_command(netem_change.format("delay 200ms reorder 50% 50%"))
+        #server_app.main()
+        #client_app.main()
+        # launch localhost client connecting to server
         
-    #def test_delayed_network(self):
-     #   """reliability over network with delay relative to the timeout value"""
+        # client sends content to server
+        
+        # server receives content from client
+        
+        # content received by server matches the content sent by client
      #   self.assertTrue(True)
+        
+    def test_delayed_network(self):
+     #   """reliability over network with delay relative to the timeout value"""
         # setup environment
-        #run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
+        run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
+        server_app.main()
+        client_app.main()
         
         # launch localhost client connecting to server
         
@@ -149,6 +159,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
+        self.assertTrue(True)
     
    # def test_allbad_network(self):
      #   """reliability over network with all of the above problems"""

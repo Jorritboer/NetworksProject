@@ -17,15 +17,19 @@ class BTCPServerSocket(BTCPSocket):
 
     # Called by the lossy layer from another thread whenever a segment arrives
     def lossy_layer_input(self, segment):
+        print("Server has received: ")
         super().print_segment(segment[0])
         seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = super().breakdown_segment(segment[0])
         if(SYN and (not FIN) and (not ACK) and self._currentState == "waiting for SYN"): 
             randomSeqNum = random.randint(0, MAX_16BITS)
+            self._timer = threading.Timer(self._timeout / 1000, self.accept)
+            self._timer.start()
             self.sendSegment(randomSeqNum, seqnum + 1, ACK = True, SYN = True)
             self._currentState = "waiting for ACK"
         elif((not SYN) and (not FIN) and ACK and self._currentState == "waiting for ACK"):
             self._currentState = "connected"
-            print("the client has connected with acknum: ", acknum, "and seqnum: ", seqnum)
+            print("the server has connected with acknum: ", acknum, "and seqnum: ", seqnum)
+            self._timer.cancel()
     
     # Wait for the client to initiate a three-way handshake
     def accept(self):
@@ -33,6 +37,7 @@ class BTCPServerSocket(BTCPSocket):
 
     def sendSegment(self, seqnum, acknum, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
+        print("The server has sent a segment")
         self._lossy_layer.send_segment(newsegment)
 
     # Send any incoming data to the application layer

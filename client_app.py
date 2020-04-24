@@ -10,4 +10,4 @@ def main(window = 100, timeout = 100, intput = "input.file"):
     # TODO Write your file transfer clientcode using your implementation of BTCPClientSocket's connect, send, and disconnect methods.
     s.connect()
     # Clean up any state
-    s.close()
+    #s.close()
