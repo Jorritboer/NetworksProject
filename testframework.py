@@ -66,13 +66,15 @@ class TestbTCPFramework(unittest.TestCase):
         
         # close server
 
-    #def test_ideal_network(self):
-     #   """reliability over an ideal framework"""
+    def test_ideal_network(self):
+        """reliability over an ideal framework"""
         
         # setup environment (nothing to set)
 
-      #  server_app.main()
-       # client_app.main()
+        client = threading.Thread(target=client_app.main, args=())
+        client.start()
+        receivedFile = server_app.main()
+        client.join()
         # launch localhost client connecting to server
         
         # client sends content to server
@@ -80,7 +82,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
-        #self.assertTrue(True)
+        self.assertTrue(True)
     
     #def test_flipping_network(self):
        # """reliability over network with bit flips 
@@ -146,14 +148,14 @@ class TestbTCPFramework(unittest.TestCase):
         # content received by server matches the content sent by client
      #   self.assertTrue(True)
         
-    def test_delayed_network(self):
+    #def test_delayed_network(self):
      #   """reliability over network with delay relative to the timeout value"""
         # setup environment
         # run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
-        client = threading.Thread(target=client_app.main, args=())
-        client.start()
-        receivedFile = server_app.main()
-        client.join()
+        #client = threading.Thread(target=client_app.main, args=())
+        #client.start()
+        #receivedFile = server_app.main()
+        #client.join()
         
         # launch localhost client connecting to server
         
@@ -162,7 +164,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
-        self.assertTrue(True)
+        #self.assertTrue(True)
     
    # def test_allbad_network(self):
      #   """reliability over network with all of the above problems"""

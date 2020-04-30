@@ -8,16 +8,23 @@ class BTCPSocket:
     # Return the Internet checksum of data
     @staticmethod
     def in_cksum(data):
-        return BTCPSocket.intToBytes(0,2)
+        sum = 0
+        for i in range(0, len(data), 2):
+            twoBytes = int.from_bytes(data[i:i+2], byteorder='big', signed = False)
+            sum += twoBytes
+        sum = sum + (sum >> 16)
+        sum = (~sum) & 0xffff
+        sum = BTCPSocket.intToBytes(sum,2)
+        return sum
     
     @staticmethod
-    def buildsegment(seqnum, acknum, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
+    def buildsegment(seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         segment = BTCPSocket.intToBytes(seqnum)
         segment += BTCPSocket.intToBytes(acknum)
         segment += BTCPSocket.intToBytes((ACK * 4 + SYN * 2 + FIN * 1), 1) #the last three bits represent respectively the state of the three flags
         segment += BTCPSocket.intToBytes(windowsize, 1)
         segment += BTCPSocket.intToBytes(len(data))
-        check_segment = BTCPSocket.intToBytes(0)
+        check_segment = segment + BTCPSocket.intToBytes(0)
         padded_data = data + BTCPSocket.intToBytes(0,(PAYLOAD_SIZE - len(data))) 
         check_segment += padded_data  #here we have a temporary check segment with the checksum set to 0
         segment += BTCPSocket.in_cksum(check_segment)
@@ -56,4 +63,5 @@ class BTCPSocket:
         print('Data length: ', datalength)
         print('Checksum: ', cksum)
         print('Data: ', data)
+        print("The checksum has as result:", BTCPSocket.in_cksum(segment) == b'\x00\x00')
         print('--------------------------------------------')
