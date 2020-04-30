@@ -14,6 +14,7 @@ class BTCPClientSocket(BTCPSocket):
         self._timeout = timeout
         self._currentSeqNum = 0
         self._numberOfRetries = 0
+        self._connected = threading.Event()
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
     def lossy_layer_input(self, segment):
@@ -25,7 +26,9 @@ class BTCPClientSocket(BTCPSocket):
                 self.sendSegment(acknum, seqnum + 1, ACK = True)
                 self._currentState = "connected"
                 print("the client has connected with acknum: ", acknum, "and seqnum: ", seqnum + 1)
+                self._currentSeqNum = acknum
                 self._timer.cancel()
+                self._connected.set()
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
@@ -35,6 +38,7 @@ class BTCPClientSocket(BTCPSocket):
         self._timer = threading.Timer(self._timeout / 1000, self.connect)
         self._timer.start()
         self.sendSegment(randomSeqNum,0, SYN=True)
+        self._connected.wait() # wait until the connection is established to return to the app
 
     def sendSegment(self, seqnum, acknum, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)

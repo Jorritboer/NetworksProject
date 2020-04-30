@@ -1,4 +1,5 @@
 import unittest
+import threading
 import socket
 import time
 import sys
@@ -51,7 +52,6 @@ class TestbTCPFramework(unittest.TestCase):
     def setUp(self):
         """Prepare for testing"""
         # default netem rule (does nothing)
-        run_command(netem_del)
         run_command(netem_add)
         
         
@@ -60,6 +60,7 @@ class TestbTCPFramework(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after testing"""
+        run_command(netem_del)
         # clean the environment
         
         
@@ -148,9 +149,11 @@ class TestbTCPFramework(unittest.TestCase):
     def test_delayed_network(self):
      #   """reliability over network with delay relative to the timeout value"""
         # setup environment
-        run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
-        server_app.main()
-        client_app.main()
+        # run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
+        client = threading.Thread(target=client_app.main, args=())
+        client.start()
+        receivedFile = server_app.main()
+        client.join()
         
         # launch localhost client connecting to server
         
