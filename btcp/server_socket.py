@@ -22,7 +22,9 @@ class BTCPServerSocket(BTCPSocket):
     def lossy_layer_input(self, segment):
         print("Server has received: ")
         super().print_segment(segment[0])
-        seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = super().breakdown_segment(segment[0])
+        seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
+        if(not cksumHasSucceeded):
+            return
         if(SYN and (not FIN) and (not ACK) and self._currentState == "waiting for SYN"): 
             randomSeqNum = random.randint(0, MAX_16BITS)
             self._timer = threading.Timer(self._timeout / 1000, self.accept)
@@ -30,7 +32,6 @@ class BTCPServerSocket(BTCPSocket):
             self.sendSegment(randomSeqNum, seqnum + 1, ACK = True, SYN = True)
             self._currentState = "waiting for ACK"
         elif((not SYN) and (not FIN) and ACK and self._currentState == "waiting for ACK"):
-            print("hier komt hij")
             self._currentState = "connected"
             print("the server has connected with acknum: ", acknum, "and seqnum: ", seqnum)
             self._exptectedNextSeqNum = seqnum + 1
@@ -72,9 +73,10 @@ class BTCPServerSocket(BTCPSocket):
             self._bufferlock.release()
             data = data.decode()
             file.append(data)
-            if(file == ["pakketje1","pakketje2","pakketje3","pakketje4","pakketje5"]):
+            if(len(file) == 20):
                 fileCompleted = True
-            print(data)
+        return file
+            
 
     # Clean up any state
     def close(self):

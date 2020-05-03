@@ -47,21 +47,19 @@ class BTCPSocket:
         FIN = bool(flags & 1)
         windowsize = segment[5] # when getting one byte you don't need to convert from bytes
         datalength = int.from_bytes(segment[6:8], byteorder='big', signed = False)
-        cksum = int.from_bytes(segment[8:10], byteorder='big', signed = False)
+        cksumHasSucceeded = BTCPSocket.in_cksum(segment) == b'\x00\x00'
         data = segment[10:10+datalength]
-
-        return seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data
+        return seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data
 
     @staticmethod
     def print_segment(segment):
-        seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = BTCPSocket.breakdown_segment(segment)
+        seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = BTCPSocket.breakdown_segment(segment)
         print('--------------------------------------------')
         print('Sequence number: ', seqnum)
         print('Acknowledgement number: ', acknum)
         print('ACK =', ACK, '    SYN =', SYN, '    FIN =', FIN)
         print('Window size: ', windowsize)
-        print('Data length: ', datalength)
-        print('Checksum: ', cksum)
+        print('Data length: ', len(data))
         print('Data: ', data)
-        print("The checksum has as result:", BTCPSocket.in_cksum(segment) == b'\x00\x00')
+        print("The checksum has succeeded:", cksumHasSucceeded)
         print('--------------------------------------------')

@@ -40,7 +40,6 @@ def run_command(command,cwd=None, shell=True):
         print("1. problem running command : \n   ", str(command), "\n problem : ", str(inst))
 
     process.communicate()  # wait for the process to end
-    print("command has been run")
     if process.returncode:
         print("2. problem running command : \n   ", str(command), " ", process.returncode)
         
@@ -52,6 +51,7 @@ class TestbTCPFramework(unittest.TestCase):
     def setUp(self):
         """Prepare for testing"""
         # default netem rule (does nothing)
+        run_command(netem_del)
         run_command(netem_add)
         
         
@@ -66,15 +66,16 @@ class TestbTCPFramework(unittest.TestCase):
         
         # close server
 
-    def test_ideal_network(self):
-        """reliability over an ideal framework"""
+    #def test_ideal_network(self):
+        #"""reliability over an ideal framework"""
         
         # setup environment (nothing to set)
 
-        client = threading.Thread(target=client_app.main, args=())
-        client.start()
-        receivedFile = server_app.main()
-        client.join()
+        #client = threading.Thread(target=client_app.main, args=())
+        #client.start()
+        #receivedFile = server_app.main()
+        #print(receivedFile)
+        #client.join()
         # launch localhost client connecting to server
         
         # client sends content to server
@@ -82,14 +83,18 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
-        self.assertTrue(True)
+        #self.assertTrue(True)
     
-    #def test_flipping_network(self):
-       # """reliability over network with bit flips 
-       # (which sometimes results in lower layer packet loss)"""
-       # self.assertTrue(True)
-        # setup environment
-        #run_command(netem_change.format("corrupt 1%"))
+    # def test_flipping_network(self):
+    #     """reliability over network with bit flips 
+    #     (which sometimes results in lower layer packet loss)"""
+    #     run_command(netem_change.format("corrupt 1%"))
+    #     client = threading.Thread(target=client_app.main, args=())
+    #     client.start()
+    #     receivedFile = server_app.main()
+    #     print(receivedFile)
+    #     client.join()
+        #setup environment
         
         # launch localhost client connecting to server
         
@@ -98,6 +103,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
+        #self.assertTrue(True)
 
     #def test_duplicates_network(self):
       #  """reliability over network with duplicate packets"""
@@ -115,12 +121,14 @@ class TestbTCPFramework(unittest.TestCase):
         # content received by server matches the content sent by client
        # self.assertTrue(True)
 
-    #def test_lossy_network(self):
-     #   """reliability over network with packet loss"""
-        #run_command(netem_change.format("loss 10% 25%"))
-      #  run_command(netem_change.format("loss 80%"))
-       # server_app.main()
-        #client_app.main()
+    def test_lossy_network(self):
+        """reliability over network with packet loss"""
+        run_command(netem_change.format("loss 50%"))
+        client = threading.Thread(target=client_app.main, args=())
+        client.start()
+        receivedFile = server_app.main()
+        print(receivedFile)
+        client.join()
         # setup environment
         
         
@@ -131,7 +139,7 @@ class TestbTCPFramework(unittest.TestCase):
         # server receives content from client
         
         # content received by server matches the content sent by client
-        #self.assertTrue(True)
+        self.assertTrue(True)
 
     #def test_reordering_network(self):
     #    """reliability over network with packet reordering"""    

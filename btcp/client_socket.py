@@ -18,24 +18,35 @@ class BTCPClientSocket(BTCPSocket):
         self._numberOfRetries = 0
         self._connected = threading.Event()
         self._entireFileAcknowledged = threading.Event()
+        self._sendBase = 0
+        self._initialSequenceNumber = 0
+        self._timerLock = threading.Lock()
+        self._sendtimer = 0
 
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
     def lossy_layer_input(self, segment):
         print("Client has received: ")
         super().print_segment(segment[0])
-        seqnum, acknum, ACK, SYN, FIN, windowsize, datalength, cksum, data = super().breakdown_segment(segment[0])
+        seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
+        if(not cksumHasSucceeded):
+            return
         if((SYN and (not FIN) and ACK) and self._currentState == "waiting for SYN and ACK" and acknum == self._NextSeqNum + 1): 
                 self._currentState = "connected"
                 print("the client has connected with acknum: ", acknum, "and seqnum: ", seqnum + 1)
                 self._NextSeqNum = acknum
                 self._AckNum = seqnum + 1
+                self._sendBase = acknum
                 self._timer.cancel()
                 self._connected.set()
         elif((not SYN) and (not FIN) and ACK and self._currentState == "connected"):
             #an ACK has been received
             if(acknum == self._lastSegment):
                 self._entireFileAcknowledged.set()
+                self._timer.cancel()
+            elif(acknum >= self._sendBase):
+                self._sendBase = acknum + 1
+                self.startTimer(self.timeout)
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
@@ -49,21 +60,38 @@ class BTCPClientSocket(BTCPSocket):
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
-        print("The client sent a segment")
         self._lossy_layer.send_segment(newsegment)
-
 
     # Send data originating from the application in a reliable way to the server
     def send(self, data):
-        self._lastSegment = self._NextSeqNum + 4
-        self.sendSegment(self._NextSeqNum, self._AckNum, ACK = True, data = "pakketje1".encode())
-        self.sendSegment(self._NextSeqNum + 1, data = "pakketje2".encode())
-        self.sendSegment(self._NextSeqNum + 2, data = "pakketje3".encode())
-        #self.sendSegment(self._NextSeqNum + 3, data = "pakketje4".encode())
-        self.sendSegment(self._NextSeqNum + 4, data = "pakketje5".encode())
+        self._lastSegment = self._sendBase + 19
+        self._initialSequenceNumber = self._sendBase
+        self.startTimer(self.timeout)
+        self._sendPackets = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15","p16","p17","p18","p19","p20"]
+        self._sendPackets = [c.encode() for c in self._sendPackets]
+        self.sendNumberOfSegments(20)
         self._entireFileAcknowledged.wait()
+    
+    def startTimer(self, method):
+        self._timerLock.acquire()
+        if(self._sendtimer != 0):
+            self._sendtimer.cancel()
+        self._sendtimer = threading.Timer(self._timeout / 1000, method)
+        self._sendtimer.start()
+        self._timerLock.release()
 
+    def sendNumberOfSegments(self, amount):
+        for seqnum in range(self._sendBase, self._initialSequenceNumber + len(self._sendPackets)):
+            if(seqnum == self._initialSequenceNumber):
+                self.sendSegment(seqnum, self._AckNum, ACK = True, data= self._sendPackets[seqnum - self._initialSequenceNumber])
+            else: 
+                self.sendSegment(seqnum, data= self._sendPackets[seqnum - self._initialSequenceNumber])
 
+    def timeout(self):
+        print("a timeout has occured, we restart in: ", self._sendBase - self._initialSequenceNumber)
+        self.sendNumberOfSegments(20)
+        self.startTimer(self.timeout)
+        
 
     # Perform a handshake to terminate a connection
     def disconnect(self):
