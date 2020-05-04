@@ -9,9 +9,10 @@ from btcp.constants import *
 # The bTCP server socket
 # A server application makes use of the services provided by bTCP by calling accept, recv, and close
 class BTCPServerSocket(BTCPSocket):
-    def __init__(self, window, timeout):
+    def __init__(self, window, timeout, printSegments):
         super().__init__(window, timeout)
         self._lossy_layer = LossyLayer(self, SERVER_IP, SERVER_PORT, CLIENT_IP, CLIENT_PORT)
+        self._printSegments = printSegments
         self._buffer = []
         self._currentState = "unconnected"
         self._connected = threading.Event()
@@ -20,8 +21,9 @@ class BTCPServerSocket(BTCPSocket):
 
     # Called by the lossy layer from another thread whenever a segment arrives
     def lossy_layer_input(self, segment):
-        print("Server has received: ")
-        super().print_segment(segment[0])
+        if self._printSegments:
+            print("The server has received:")
+            super().print_segment(segment[0])
         seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
         if(not cksumHasSucceeded):
             return
@@ -57,7 +59,8 @@ class BTCPServerSocket(BTCPSocket):
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
-        print("The server has sent a segment")
+        if self._printSegments:
+            print("The server has sent a segment with ACK ", acknum)
         self._lossy_layer.send_segment(newsegment)
 
     # Send any incoming data to the application layer

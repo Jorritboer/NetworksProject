@@ -8,9 +8,10 @@ from btcp.constants import *
 # bTCP client socket
 # A client application makes use of the services provided by bTCP by calling connect, send, disconnect, and close
 class BTCPClientSocket(BTCPSocket):
-    def __init__(self, window, timeout):
+    def __init__(self, window, timeout, printSegments):
         super().__init__(window, timeout)
         self._lossy_layer = LossyLayer(self, CLIENT_IP, CLIENT_PORT, SERVER_IP, SERVER_PORT)
+        self._printSegments = printSegments
         self._currentState = "waiting"
         self._timeout = timeout
         self._NextSeqNum = 0
@@ -26,8 +27,9 @@ class BTCPClientSocket(BTCPSocket):
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
     def lossy_layer_input(self, segment):
-        print("Client has received: ")
-        super().print_segment(segment[0])
+        if self._printSegments:
+            print("Client has received: ")
+            super().print_segment(segment[0])
         seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
         if(not cksumHasSucceeded):
             return
@@ -43,7 +45,7 @@ class BTCPClientSocket(BTCPSocket):
             #an ACK has been received
             if(acknum == self._lastSegment):
                 self._entireFileAcknowledged.set()
-                self._timer.cancel()
+                self._sendtimer.cancel()
             elif(acknum >= self._sendBase):
                 self._sendBase = acknum + 1
                 self.startTimer(self.timeout)
@@ -60,6 +62,8 @@ class BTCPClientSocket(BTCPSocket):
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
+        if self._printSegments:
+            print("The client has sent a segment with SEQ ", seqnum)
         self._lossy_layer.send_segment(newsegment)
 
     # Send data originating from the application in a reliable way to the server

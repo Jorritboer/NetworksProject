@@ -124,9 +124,9 @@ class TestbTCPFramework(unittest.TestCase):
     def test_lossy_network(self):
         """reliability over network with packet loss"""
         run_command(netem_change.format("loss 50%"))
-        client = threading.Thread(target=client_app.main, args=())
+        client = threading.Thread(target=client_app.main, args=(False,))
         client.start()
-        receivedFile = server_app.main()
+        receivedFile = server_app.main(printSegments=False)
         print(receivedFile)
         client.join()
         # setup environment
