@@ -23,6 +23,8 @@ class BTCPClientSocket(BTCPSocket):
         self._initialSequenceNumber = 0
         self._timerLock = threading.Lock()
         self._sendtimer = 0
+        self._disconnectingtimer = 0
+        self._disconnected = threading.Event()
 
 
     # Called by the lossy layer from another thread whenever a segment arrives. 
@@ -49,6 +51,9 @@ class BTCPClientSocket(BTCPSocket):
             elif(acknum >= self._sendBase):
                 self._sendBase = acknum + 1
                 self.startTimer(self.timeout)
+        elif((not SYN) and FIN and ACK and self._currentState == "waiting for ACK and FIN"):
+            self._disconnectingtimer.cancel()
+            self._disconnected.set()
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
@@ -68,11 +73,12 @@ class BTCPClientSocket(BTCPSocket):
 
     # Send data originating from the application in a reliable way to the server
     def send(self, data):
-        self._lastSegment = self._sendBase + 19
+        self._sendPackets = []
+        for i in range(0, len(data), 1008): #splits it in parts of 1008 bytes
+            self._sendPackets.append(data[i:i + 1008])
+        self._lastSegment = self._sendBase + len(self._sendPackets) - 1
         self._initialSequenceNumber = self._sendBase
         self.startTimer(self.timeout)
-        self._sendPackets = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15","p16","p17","p18","p19","p20"]
-        self._sendPackets = [c.encode() for c in self._sendPackets]
         self.sendNumberOfSegments(20)
         self._entireFileAcknowledged.wait()
     
@@ -99,7 +105,12 @@ class BTCPClientSocket(BTCPSocket):
 
     # Perform a handshake to terminate a connection
     def disconnect(self):
-        pass
+        self._currentState = "waiting for ACK and FIN"
+        self._disconnectingtimer = threading.Timer(self._timeout / 1000, self.disconnect)
+        self._disconnectingtimer.start()
+        self.sendSegment(self._NextSeqNum, FIN = True)
+        self._disconnected.wait()
+
 
     # Clean up any state
     def close(self):

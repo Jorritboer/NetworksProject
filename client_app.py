@@ -9,7 +9,10 @@ def main(printSegments,window = 100, timeout = 100, input = "input.file"):
     s = BTCPClientSocket(window, timeout, printSegments)
     # TODO Write your file transfer clientcode using your implementation of BTCPClientSocket's connect, send, and disconnect methods.
     s.connect()
-    s.send("groetjes")
+    f = open(input, 'rb')
+    data = f.read()
+    f.close()
+    s.send(data)
+    s.disconnect()
     # Clean up any state
     s.close()
-    #return s._currentSeqNum

@@ -50,6 +50,8 @@ class BTCPServerSocket(BTCPSocket):
                 self._exptectedNextSeqNum  += 1
                 self._bufferNotEmpty.set()
             self.sendSegment(acknum = self._exptectedNextSeqNum - 1, ACK = True)
+        elif((not SYN) and FIN and (not ACK) and self._currentState == "connected"):
+            self.sendSegment(acknum = seqnum + 1, ACK = True, FIN = True)
             
     
     # Wait for the client to initiate a three-way handshake
@@ -65,20 +67,14 @@ class BTCPServerSocket(BTCPSocket):
 
     # Send any incoming data to the application layer
     def recv(self):
-        file = []
-        fileCompleted = False
-        while(not fileCompleted):
-            self._bufferNotEmpty.wait()
-            self._bufferlock.acquire()
-            data = self._buffer.pop(0)
-            if(len(self._buffer) == 0):
-                self._bufferNotEmpty.clear()
-            self._bufferlock.release()
-            data = data.decode()
-            file.append(data)
-            if(len(file) == 20):
-                fileCompleted = True
-        return file
+        if(not self._bufferNotEmpty.wait(self._timeout / 1000)):
+            return None
+        self._bufferlock.acquire()
+        data = self._buffer.pop(0)
+        if(len(self._buffer) == 0):
+            self._bufferNotEmpty.clear()
+        self._bufferlock.release()
+        return data
             
 
     # Clean up any state

@@ -4,13 +4,18 @@ import argparse
 from btcp.server_socket import BTCPServerSocket
 
 
-def main(printSegments,window = 100, timeout = 100, output = "output.file"):
+def main(printSegments, stopServer, window = 100, timeout = 100, output = "output.file"):
     # Create a bTCP server socket
     s = BTCPServerSocket(window, timeout, printSegments)
     # TODO Write your file transfer server code here using your BTCPServerSocket's accept, and recv methods.
     s.accept()
-    file = s.recv()
+    open(output, 'w').close() #this makes sure the file is empty
+    while(not stopServer.is_set()):
+        data = s.recv() #write it to the output file
+        if(data != None):
+            f = open(output, 'ab')
+            f.write(data)
+            f.close()
     # Clean up any state
     s.close()
-    return file
     #return s._currentSeqNum
