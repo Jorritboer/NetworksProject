@@ -8,12 +8,13 @@ from btcp.constants import *
 # bTCP client socket
 # A client application makes use of the services provided by bTCP by calling connect, send, disconnect, and close
 class BTCPClientSocket(BTCPSocket):
-    def __init__(self, window, timeout, printSegments):
+    def __init__(self, window, timeout, printSegments, maxRetries):
         super().__init__(window, timeout)
         self._lossy_layer = LossyLayer(self, CLIENT_IP, CLIENT_PORT, SERVER_IP, SERVER_PORT)
         self._printSegments = printSegments
         self._currentState = "waiting"
         self._timeout = timeout
+        self._maxRetries = maxRetries
         self._NextSeqNum = 0
         self._AckNum = 0
         self._numberOfRetries = 0
@@ -35,9 +36,11 @@ class BTCPClientSocket(BTCPSocket):
         seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
         if(not cksumHasSucceeded):
             return
+        self._window = windowsize #to make sure we do not have a window size of 0
+        if(self._window == 0):
+            self._window = 1 
         if((SYN and (not FIN) and ACK) and self._currentState == "waiting for SYN and ACK" and acknum == self._NextSeqNum + 1): 
                 self._currentState = "connected"
-                print("the client has connected with acknum: ", acknum, "and seqnum: ", seqnum + 1)
                 self._NextSeqNum = acknum
                 self._AckNum = seqnum + 1
                 self._sendBase = acknum
@@ -51,6 +54,7 @@ class BTCPClientSocket(BTCPSocket):
             elif(acknum >= self._sendBase):
                 self._sendBase = acknum + 1
                 self.startTimer(self.timeout)
+            self.sendSegmentsInWindow() 
         elif((not SYN) and FIN and ACK and self._currentState == "waiting for ACK and FIN"):
             self._disconnectingtimer.cancel()
             self._disconnected.set()
@@ -65,7 +69,7 @@ class BTCPClientSocket(BTCPSocket):
         self.sendSegment(randomSeqNum,0, SYN=True)
         self._connected.wait() # wait until the connection is established to return to the app
 
-    def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
+    def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 0, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
         if self._printSegments:
             print("The client has sent a segment with SEQ ", seqnum)
@@ -79,7 +83,7 @@ class BTCPClientSocket(BTCPSocket):
         self._lastSegment = self._sendBase + len(self._sendPackets) - 1
         self._initialSequenceNumber = self._sendBase
         self.startTimer(self.timeout)
-        self.sendNumberOfSegments(20)
+        self.sendSegmentsInWindow()
         self._entireFileAcknowledged.wait()
     
     def startTimer(self, method):
@@ -90,21 +94,27 @@ class BTCPClientSocket(BTCPSocket):
         self._sendtimer.start()
         self._timerLock.release()
 
-    def sendNumberOfSegments(self, amount):
-        for seqnum in range(self._sendBase, self._initialSequenceNumber + len(self._sendPackets)):
-            if(seqnum == self._initialSequenceNumber):
-                self.sendSegment(seqnum, self._AckNum, ACK = True, data= self._sendPackets[seqnum - self._initialSequenceNumber])
+    def sendSegmentsInWindow(self):
+        while(self._NextSeqNum <= self._sendBase + self._window and self._NextSeqNum <= self._lastSegment):
+            if(self._NextSeqNum == self._initialSequenceNumber):
+                self.sendSegment(self._NextSeqNum, self._AckNum, ACK = True, data= self._sendPackets[self._NextSeqNum - self._initialSequenceNumber])
             else: 
-                self.sendSegment(seqnum, data= self._sendPackets[seqnum - self._initialSequenceNumber])
+                self.sendSegment(self._NextSeqNum, data= self._sendPackets[self._NextSeqNum - self._initialSequenceNumber])
+            self._NextSeqNum += 1
 
     def timeout(self):
-        print("a timeout has occured, we restart with seqnum : ", self._sendBase, ', which is package number ', self._sendBase - self._initialSequenceNumber)
-        self.sendNumberOfSegments(20)
+        if(self._printSegments):
+            print("a timeout has occured, we restart with seqnum : ", self._sendBase, ', which is package number ', self._sendBase - self._initialSequenceNumber)
+        self._NextSeqNum = self._sendBase
+        self.sendSegmentsInWindow()
         self.startTimer(self.timeout)
         
 
     # Perform a handshake to terminate a connection
     def disconnect(self):
+        if(self._numberOfRetries > self._maxRetries):
+            self._disconnected.set()
+        self._numberOfRetries += 1
         self._currentState = "waiting for ACK and FIN"
         self._disconnectingtimer = threading.Timer(self._timeout / 1000, self.disconnect)
         self._disconnectingtimer.start()

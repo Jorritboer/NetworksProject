@@ -26,6 +26,8 @@ class BTCPServerSocket(BTCPSocket):
             super().print_segment(segment[0])
         seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
         if(not cksumHasSucceeded):
+            print("Checksum has not succeeded")
+            super().print_segment(segment[0])
             return
         if(SYN and (not FIN) and (not ACK) and self._currentState == "waiting for SYN"): 
             randomSeqNum = random.randint(0, MAX_16BITS)
@@ -35,7 +37,6 @@ class BTCPServerSocket(BTCPSocket):
             self._currentState = "waiting for ACK"
         elif((not SYN) and (not FIN) and ACK and self._currentState == "waiting for ACK"):
             self._currentState = "connected"
-            print("the server has connected with acknum: ", acknum, "and seqnum: ", seqnum)
             self._exptectedNextSeqNum = seqnum + 1
             self._timer.cancel()
             self._connected.set()
@@ -43,7 +44,7 @@ class BTCPServerSocket(BTCPSocket):
             self._buffer.append(data)
             self._bufferlock.release()
         elif((not SYN) and (not FIN) and (not ACK) and self._currentState == "connected"):
-            if(seqnum == self._exptectedNextSeqNum ):
+            if(seqnum == self._exptectedNextSeqNum and self._window > len(self._buffer)):
                 self._bufferlock.acquire()
                 self._buffer.append(data)
                 self._bufferlock.release()
@@ -59,7 +60,8 @@ class BTCPServerSocket(BTCPSocket):
         self._currentState = "waiting for SYN"
         self._connected.wait() # wait until the connection is established to return to the app
 
-    def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 100, data:bytes = b''):
+    def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, data:bytes = b''):
+        windowsize = self._window - len(self._buffer)
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
         if self._printSegments:
             print("The server has sent a segment with ACK ", acknum)

@@ -62,4 +62,5 @@ class BTCPSocket:
         print('Data length: ', len(data))
         print('Data: ', data)
         print("The checksum has succeeded:", cksumHasSucceeded)
+        print("checksum", segment[8:10])
         print('--------------------------------------------')
