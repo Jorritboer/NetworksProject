@@ -68,7 +68,7 @@ class BTCPServerSocket(BTCPSocket):
     # Send any incoming data to the application layer
     def recv(self):
         if(not self._bufferNotEmpty.wait(self._timeout / 1000)):
-            return None
+            return b''
         self._bufferlock.acquire()
         data = self._buffer.pop(0)
         if(len(self._buffer) == 0):

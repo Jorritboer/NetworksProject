@@ -98,7 +98,7 @@ class BTCPClientSocket(BTCPSocket):
                 self.sendSegment(seqnum, data= self._sendPackets[seqnum - self._initialSequenceNumber])
 
     def timeout(self):
-        print("a timeout has occured, we restart in: ", self._sendBase - self._initialSequenceNumber)
+        print("a timeout has occured, we restart with seqnum : ", self._sendBase, ', which is package number ', self._sendBase - self._initialSequenceNumber)
         self.sendNumberOfSegments(20)
         self.startTimer(self.timeout)
         
