@@ -2,13 +2,15 @@
 
 import argparse
 from btcp.client_socket import BTCPClientSocket
+import time
 
 
 def main(printSegments,window = 100, timeout = 100, input = "input.file", maxRetries = 100):
     # Create a bTCP client socket with the given window size and timeout value
     s = BTCPClientSocket(window, timeout, printSegments, maxRetries)
     # TODO Write your file transfer clientcode using your implementation of BTCPClientSocket's connect, send, and disconnect methods.
-    s.connect()
+    while not s.connect(): # if no connection can be established, wait 10*timeout and try again
+        time.sleep((10 * timeout) / 1000)
     f = open(input, 'rb')
     data = f.read()
     f.close()
@@ -16,3 +18,4 @@ def main(printSegments,window = 100, timeout = 100, input = "input.file", maxRet
     s.disconnect()
     # Clean up any state
     s.close()
+    

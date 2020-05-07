@@ -61,6 +61,9 @@ class BTCPClientSocket(BTCPSocket):
 
     # Perform a three-way handshake to establish a connection
     def connect(self):
+        if(self._numberOfRetries > self._maxRetries):
+            self._disconnected.set()
+        self._numberOfRetries += 1
         randomSeqNum = random.randint(0, MAX_16BITS) # Creating a random 16 bit value for the sequence number
         self._NextSeqNum = randomSeqNum
         self._currentState = "waiting for SYN and ACK"
@@ -68,6 +71,8 @@ class BTCPClientSocket(BTCPSocket):
         self._timer.start()
         self.sendSegment(randomSeqNum,0, SYN=True)
         self._connected.wait() # wait until the connection is established to return to the app
+        self._numberOfRetries = 0
+        return self._currentState == "connected" # return if the connection establishment succeeded
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 0, data:bytes = b''):
         newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
