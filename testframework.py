@@ -57,17 +57,11 @@ class TestbTCPFramework(unittest.TestCase):
         run_command(netem_add)
         print("testing: ", self._testMethodName)
         
-        #launch localhost server
-        
-
     def tearDown(self):
         """Clean up after testing"""
         run_command(netem_del)
         # clean the environment
         
-        
-        # close server
-
     def test_ideal_network(self):
         """reliability over an ideal framework"""
         stopServer = threading.Event()
@@ -129,7 +123,7 @@ class TestbTCPFramework(unittest.TestCase):
         
     # def test_delayed_network(self):
     #     """reliability over network with delay relative to the timeout value"""
-    #     run_command(netem_change.format("delay "+str(timeout)+"ms 20ms"))
+    #     run_command(netem_change.format("delay "+str(0.5 * timeout)+"ms 20ms"))
         
     #     stopServer = threading.Event()
     #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
