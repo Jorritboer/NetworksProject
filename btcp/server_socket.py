@@ -26,38 +26,33 @@ class BTCPServerSocket(BTCPSocket):
             super().print_segment(segment[0])
         seqnum, acknum, ACK, SYN, FIN, windowsize, cksumHasSucceeded, data = super().breakdown_segment(segment[0])
         if(not cksumHasSucceeded):
-            print("Checksum has not succeeded")
-            super().print_segment(segment[0])
             return
-        if(SYN and (not FIN) and (not ACK) and self._currentState == "waiting for SYN"): 
-            randomSeqNum = random.randint(0, MAX_16BITS)
-            self._timer = threading.Timer(self._timeout / 1000, self.accept)
-            self._timer.start()
-            self.sendSegment(randomSeqNum, seqnum + 1, ACK = True, SYN = True)
-            self._currentState = "waiting for ACK"
-        elif((not SYN) and (not FIN) and ACK and self._currentState == "waiting for ACK"):
-            self._currentState = "connected"
-            self._exptectedNextSeqNum = seqnum + 1
-            self._timer.cancel()
-            self._connected.set()
-            self._bufferlock.acquire()
-            self._buffer.append(data)
-            self._bufferlock.release()
-        elif((not SYN) and (not FIN) and (not ACK) and self._currentState == "connected"):
-            if(seqnum == self._exptectedNextSeqNum and self._window > len(self._buffer)):
+        if (self._currentState == "connecting"):
+            if (SYN and (not FIN) and (not ACK)): # receiving step 1 of the handshake
+                randomSeqNum = random.randint(0, MAX_16BITS)
+                self.sendSegment(randomSeqNum, seqnum + 1, ACK = True, SYN = True)
+            elif ((not SYN) and (not FIN) and ACK): # receiving step 3 of the handshake
+                self._currentState = "connected"
+                self._exptectedNextSeqNum = seqnum + 1
+                self._connected.set()
                 self._bufferlock.acquire()
                 self._buffer.append(data)
                 self._bufferlock.release()
-                self._exptectedNextSeqNum  += 1
-                self._bufferNotEmpty.set()
-            self.sendSegment(acknum = self._exptectedNextSeqNum - 1, ACK = True)
-        elif((not SYN) and FIN and (not ACK) and self._currentState == "connected"):
-            self.sendSegment(acknum = seqnum + 1, ACK = True, FIN = True)
-            
+        elif (self._currentState == "connected"):
+            if ((not SYN) and (not FIN) and (not ACK)):
+                if(seqnum == self._exptectedNextSeqNum and self._window > len(self._buffer)):
+                    self._bufferlock.acquire()
+                    self._buffer.append(data)
+                    self._bufferlock.release()
+                    self._exptectedNextSeqNum  += 1
+                    self._bufferNotEmpty.set()
+                self.sendSegment(acknum = self._exptectedNextSeqNum - 1, ACK = True)
+            if ((not SYN) and FIN and (not ACK)):
+                self.sendSegment(acknum = seqnum + 1, ACK = True, FIN = True)
     
     # Wait for the client to initiate a three-way handshake
     def accept(self):
-        self._currentState = "waiting for SYN"
+        self._currentState = "connecting"
         self._connected.wait() # wait until the connection is established to return to the app
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, data:bytes = b''):
