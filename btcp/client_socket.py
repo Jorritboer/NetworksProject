@@ -51,6 +51,7 @@ class BTCPClientSocket(BTCPSocket):
             if(acknum == self._lastSegment):
                 self._entireFileAcknowledged.set()
                 self._sendtimer.cancel()
+                self._sendBase = acknum + 1
             elif(acknum >= self._sendBase):
                 self._sendBase = acknum + 1
                 self.startTimer(self.timeout)
