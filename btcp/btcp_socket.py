@@ -1,18 +1,20 @@
 from btcp.constants import *
 
+def one_complement_add(a, b):
+    c = a + b
+    return (c & 0xffff) + (c >> 16) 
+
 class BTCPSocket:
     def __init__(self, window, timeout):
         self._window = window
         self._timeout = timeout
-   
     # Return the Internet checksum of data
     @staticmethod
     def in_cksum(data):
         sum = 0
         for i in range(0, len(data), 2):
             twoBytes = int.from_bytes(data[i:i+2], byteorder='big', signed = False)
-            sum += twoBytes
-        sum = sum + (sum >> 16)
+            sum = one_complement_add(sum, twoBytes)
         sum = (~sum) & 0xffff
         sum = BTCPSocket.intToBytes(sum,2)
         return sum
