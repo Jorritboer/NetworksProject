@@ -57,7 +57,7 @@ class BTCPServerSocket(BTCPSocket):
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, data:bytes = b''):
         windowsize = self._window - len(self._buffer)
-        newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
+        newsegment = self.buildsegment(seqnum, acknum, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
         if self._printSegments:
             print("The server has sent a segment with ACK ", acknum)
         self._lossy_layer.send_segment(newsegment)

@@ -74,7 +74,7 @@ class BTCPClientSocket(BTCPSocket):
         return self._currentState == "connected" # return if the connection establishment succeeded
 
     def sendSegment(self, seqnum = 0, acknum = 0, ACK = False, SYN = False, FIN = False, windowsize = 0, data:bytes = b''):
-        newsegment = self.buildsegment(seqnum % MAX_16BITS, acknum % MAX_16BITS, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
+        newsegment = self.buildsegment(seqnum, acknum, ACK = ACK, SYN = SYN, FIN = FIN, windowsize = windowsize, data = data)
         if self._printSegments:
             print("The client has sent a segment with SEQ ", seqnum)
         self._lossy_layer.send_segment(newsegment)
