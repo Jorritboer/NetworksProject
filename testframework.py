@@ -9,8 +9,8 @@ import filecmp
 
 timeout=100
 winsize=100
-inputfile = "input.file"
-outputfile = "output.file"
+inputfile = "input.jpeg"
+outputfile = "output.jpeg"
 intf="lo"
 netem_add="sudo tc qdisc add dev {} root netem".format(intf)
 netem_change="sudo tc qdisc change dev {} root netem {}".format(intf,"{}")
@@ -72,79 +72,79 @@ class TestbTCPFramework(unittest.TestCase):
         
         self.assertTrue(filecmp.cmp(inputfile, outputfile))
     
-    # def test_flipping_network(self):
-    #     """reliability over network with bit flips 
-    #     (which sometimes results in lower layer packet loss)"""
-    #     run_command(netem_change.format("corrupt 1%"))
+    def test_flipping_network(self):
+        """reliability over network with bit flips 
+        (which sometimes results in lower layer packet loss)"""
+        run_command(netem_change.format("corrupt 1%"))
     
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
 
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
 
-    # def test_duplicates_network(self):
-    #     """reliability over network with duplicate packets"""
-    #     run_command(netem_change.format("duplicate 50%"))
+    def test_duplicates_network(self):
+        """reliability over network with duplicate packets"""
+        run_command(netem_change.format("duplicate 50%"))
 
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
 
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
 
-    # def test_lossy_network(self):
-    #     """reliability over network with packet loss"""
-    #     run_command(netem_change.format("loss 1%"))
+    def test_lossy_network(self):
+        """reliability over network with packet loss"""
+        run_command(netem_change.format("loss 1%"))
         
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
         
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
 
-    # def test_reordering_network(self):
-    #     """reliability over network with packet reordering"""    
-    #     run_command(netem_change.format("delay 200ms reorder 50% 50%"))
+    def test_reordering_network(self):
+        """reliability over network with packet reordering"""    
+        run_command(netem_change.format("delay 200ms reorder 50% 50%"))
         
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
 
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
         
-    # def test_delayed_network(self):
-    #     """reliability over network with delay relative to the timeout value"""
-    #     run_command(netem_change.format("delay "+str(0.5 * timeout)+"ms 20ms"))
+    def test_delayed_network(self):
+        """reliability over network with delay relative to the timeout value"""
+        run_command(netem_change.format("delay "+str(0.5 * timeout)+"ms 20ms"))
         
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
 
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
     
-    # def test_allbad_network(self):
-    #     """reliability over network with all of the above problems"""
+    def test_allbad_network(self):
+        """reliability over network with all of the above problems"""
 
-    #     #run_command(netem_change.format("corrupt 1% duplicate 10% loss 10% 25% delay 20ms reorder 25% 50%"))
-    #     run_command(netem_change.format("corrupt 1% duplicate 10% loss 10% 25% delay 1ms reorder 25% 50%"))
-    #     stopServer = threading.Event()
-    #     server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
-    #     server.start()
-    #     client_app.main(False, timeout= 100, input = inputfile)
-    #     stopServer.set()
+        #run_command(netem_change.format("corrupt 1% duplicate 10% loss 10% 25% delay 20ms reorder 25% 50%"))
+        run_command(netem_change.format("corrupt 1% duplicate 10% loss 10% 25% delay 1ms reorder 25% 50%"))
+        stopServer = threading.Event()
+        server = threading.Thread(target=server_app.main, args=(False, stopServer, winsize, timeout, outputfile))
+        server.start()
+        client_app.main(False, timeout= 100, input = inputfile)
+        stopServer.set()
          
-    #     self.assertTrue(filecmp.cmp(inputfile, outputfile))
+        self.assertTrue(filecmp.cmp(inputfile, outputfile))
 
   
 #    def test_command(self):

@@ -48,7 +48,7 @@ class BTCPServerSocket(BTCPSocket):
                     self._bufferNotEmpty.set()
                 self.sendSegment(acknum = self._exptectedNextSeqNum - 1, ACK = True)
             if ((not SYN) and FIN and (not ACK)):
-                self.sendSegment(acknum = seqnum + 1, ACK = True, FIN = True)
+                self.sendSegment(acknum = seqnum, ACK = True, FIN = True)
     
     # Wait for the client to initiate a three-way handshake
     def accept(self):
