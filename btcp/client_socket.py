@@ -140,6 +140,7 @@ class BTCPClientSocket(BTCPSocket):
         self.startTimer()
         self.sendSegment(self._nextSeqNum, FIN = True)
         self._disconnected.wait()
+        self._currentState = "disconnected"
 
     # Clean up any state
     def close(self):

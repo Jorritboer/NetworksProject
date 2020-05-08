@@ -14,7 +14,7 @@ class BTCPServerSocket(BTCPSocket):
         self._lossy_layer = LossyLayer(self, SERVER_IP, SERVER_PORT, CLIENT_IP, CLIENT_PORT)
         self._printSegments = printSegments
         self._buffer = []
-        self._currentState = "unconnected"
+        self._currentState = "disconnected"
         self._connected = threading.Event()
         self._bufferNotEmpty = threading.Event()
         self._bufferlock = threading.Lock()
